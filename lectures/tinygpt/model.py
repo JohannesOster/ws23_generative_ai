@@ -11,7 +11,7 @@ class Config:
     n_head = 8          # = number of attention heads in the Multihead Attention Layer
     d_ff = 1024         # = dimension of the feed-forward layer (4*d_embd)
     n_layers = 4        # = number of transformer block layers
-    n_ctx = 256         # = context length, the max amount of tokens processable by LLM
+    n_block = 256         # = block size, the max amount of tokens processable by LLM
     dropout = 0.1       # = probability of dropout in the dropout layers
     batch_size = 12     # = how many sequences are procsses simultaneously
 
@@ -24,12 +24,12 @@ class TinyGPT(nn.Module):
         self.config = config
 
         self.w_embd = nn.Embedding(config.n_embd, config.d_embd, padding_idx=config.padding_idx)
-        self.pos_embd = nn.Embedding(config.n_ctx, config.d_embd)
+        self.pos_embd = nn.Embedding(config.n_block, config.d_embd)
         self.dropout = nn.Dropout(p=config.dropout)
         self.t_blocks = nn.ModuleList([TransformerBlock(config) for _ in range(config.n_layers)])
         self.linear = nn.Linear(config.d_embd, config.n_embd, bias=False)
 
-        self.register_buffer('pos', torch.arange(0, config.n_ctx, dtype=torch.long).unsqueeze(0))
+        self.register_buffer('pos', torch.arange(0, config.n_block, dtype=torch.long).unsqueeze(0))
 
         # Tie the weights of the final layer to the word embedding layer
         # https://github.com/openai/gpt-2/blob/a74da5d99abaaba920de8131d64da2862a8f213b/src/model.py#L171
@@ -67,7 +67,7 @@ class TransformerBlock(nn.Module):
         super().__init__()
         self.config = config
         self.register_buffer('attn_mask', torch.triu(torch.ones(
-            config.n_ctx, config.n_ctx), diagonal=1).bool())
+            config.n_block, config.n_block), diagonal=1).bool())
 
         self.ln_1 = nn.LayerNorm(config.d_embd)
         self.att = nn.MultiheadAttention(config.d_embd, config.n_head,
@@ -83,7 +83,7 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x, key_padding_mask=None):
         attn_output, _ = self.att(x, x, x, attn_mask=self.attn_mask,
-                                  key_padding_mask=key_padding_mask)
+                                  key_padding_mask=key_padding_mask, average_attn_weights=False)
         x = self.ln_1(x + attn_output)
         x = self.ln_2(x + self.ff(x))
         return x

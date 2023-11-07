@@ -10,10 +10,10 @@ def generate(model, prompt, tokenizer, length=100, device='cpu'):
 
         for i in range(length):
             # Make sure it has the correct length
-            while len(input_tensor[0]) < model.config.n_ctx:
+            while len(input_tensor[0]) < model.config.n_block:
                 input_tensor = torch.cat((input_tensor, torch.tensor([tokenizer.padding_idx]).unsqueeze(
                     0).to(device)), 1)  # pad with the padding character
-            input_tensor = input_tensor[:, -model.config.n_ctx:]  # take the last n_ctx characters
+            input_tensor = input_tensor[:, -model.config.n_block:]  # take the last n_block characters
 
             # Create the key_padding_mask for the input tensor
             key_padding_mask = input_tensor == tokenizer.padding_idx

@@ -19,12 +19,12 @@ class CharDataset(Dataset):
         self.data = data  # alread batched
 
     def __len__(self):
-        return len(self.data) - self.config.n_ctx
+        return len(self.data) - self.config.n_block
 
     def __getitem__(self, idx):
 
-        # grab a chunk of (n_ctx + 1) characters from the data
-        chunk = self.data[idx][0:self.config.n_ctx+1]
+        # grab a chunk of (n_block + 1) characters from the data
+        chunk = self.data[idx][0:self.config.n_block+1]
         if (len(chunk) == 0):
             print(f'Got empy chunk at {idx} before split')
             print(self.data[idx])
@@ -33,8 +33,8 @@ class CharDataset(Dataset):
         if (len(chunk) == 0):
             print(f'Got empy chunk at {idx} after split')
 
-        # pad the input to the context size
-        while len(chunk) < self.config.n_ctx+1:
+        # pad the input to the block size
+        while len(chunk) < self.config.n_block+1:
             chunk.append(self.config.padding_idx)
 
         # return as tensors
