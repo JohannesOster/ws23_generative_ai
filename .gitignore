@@ -8,4 +8,4 @@ __pycache__
 .vector_cache
 
 *.pt
-*solved*
+*_ignore*
